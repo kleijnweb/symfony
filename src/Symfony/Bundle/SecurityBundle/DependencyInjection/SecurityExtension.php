@@ -39,10 +39,10 @@ class SecurityExtension extends Extension
     private $requestMatchers = array();
     private $expressions = array();
     private $contextListeners = array();
-    private $listenerPositions = array('pre_auth', 'form', 'http', 'remember_me', 'anon', 'post_authentication');
     private $firewallPluginFactories = array();
     private $userProviderFactories = array();
     private $expressionLanguage;
+    private $accessControlRules;
 
     /**
      * @deprecated
@@ -73,6 +73,11 @@ class SecurityExtension extends Extension
         $mainConfig = $this->getConfiguration($configs, $container);
 
         $config = $this->processConfiguration($mainConfig, $configs);
+
+        if($config['access_control']){
+            // When there are global access control rules, set them to be used by firewall plugins
+            $this->accessControlRules = $config['access_control'];
+        }
 
         // load services
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
@@ -405,21 +410,16 @@ class SecurityExtension extends Extension
         // Determine default entry point
         $configuredEntryPoint = isset($firewall['entry_point']) ? $firewall['entry_point'] : null;
 
-        // Authentication listeners
-        list($authListeners, $defaultEntryPoint) = $this->createAuthenticationListeners($container, $id, $firewall, $authenticationProviders, $defaultProvider, $configuredEntryPoint);
+        if($this->accessControlRules){
+            $firewall['access_control'] = $this->accessControlRules;
+        }
+
+        // Plugin listeners
+        list($authListeners, $defaultEntryPoint) = $this->createListeners($container, $id, $firewall, $authenticationProviders, $defaultProvider, $configuredEntryPoint);
 
         $config->replaceArgument(7, $configuredEntryPoint ?: $defaultEntryPoint);
 
         $listeners = array_merge($listeners, $authListeners);
-
-        // Switch user listener
-        if (isset($firewall['switch_user'])) {
-            $listenerKeys[] = 'switch_user';
-            $listeners[] = new Reference($this->createSwitchUserListener($container, $id, $firewall['switch_user'], $defaultProvider));
-        }
-
-        // Access listener
-        $listeners[] = new Reference('security.access_listener');
 
         // Exception listener
         $exceptionListener = new Reference($this->createExceptionListener($container, $firewall, $id, $configuredEntryPoint ?: $defaultEntryPoint, $firewall['stateless']));
@@ -460,27 +460,29 @@ class SecurityExtension extends Extension
         return $this->contextListeners[$contextKey] = $listenerId;
     }
 
-    private function createAuthenticationListeners($container, $id, $firewall, &$authenticationProviders, $defaultProvider, $defaultEntryPoint)
+    private function createListeners($container, $id, $firewall, &$authenticationProviders, $defaultProvider, $defaultEntryPoint)
     {
         $listeners = array();
         $hasAuthenticationProvider = false;
+
+        /** @var FirewallPluginFactoryInterface $factory */
         foreach ($this->firewallPluginFactories as $factory) {
             $key = str_replace('-', '_', $factory->getKey());
 
             if (isset($firewall[$key])) {
                 $userProvider = isset($firewall[$key]['provider']) ? $this->getUserProviderId($firewall[$key]['provider']) : $defaultProvider;
 
-                list($authenticationProvider, $listenerId, $entryPoint) = $factory->create($container, $id, $firewall[$key], $userProvider, $defaultEntryPoint);
+                $plugin = FirewallPlugin::normalize($factory->create($container, $id, $firewall[$key], $userProvider, $defaultEntryPoint));
 
-                if ($entryPoint !== null) {
-                    $defaultEntryPoint = $entryPoint;
+                if ($plugin->getAuthenticationEntryPoint() !== null) {
+                    $defaultEntryPoint = $plugin->getAuthenticationEntryPoint();
                 }
 
-                $listeners[] = new Reference($listenerId);
+                $listeners[] = new Reference($plugin->getListenerId());
 
-                if ($authenticationProvider !== null) {
+                if ($plugin->getAuthenticationProviderId() !== null) {
                     $hasAuthenticationProvider = true;
-                    $authenticationProviders[] = $authenticationProvider;
+                    $authenticationProviders[] = $plugin->getAuthenticationProviderId();
                 }
             }
         }
@@ -619,21 +621,6 @@ class SecurityExtension extends Extension
         }
 
         return $exceptionListenerId;
-    }
-
-    private function createSwitchUserListener($container, $id, $config, $defaultProvider)
-    {
-        $userProvider = isset($config['provider']) ? $this->getUserProviderId($config['provider']) : $defaultProvider;
-
-        $switchUserListenerId = 'security.authentication.switchuser_listener.' . $id;
-        $listener = $container->setDefinition($switchUserListenerId, new ChildDefinition('security.authentication.switchuser_listener'));
-        $listener->replaceArgument(1, new Reference($userProvider));
-        $listener->replaceArgument(2, new Reference('security.user_checker.' . $id));
-        $listener->replaceArgument(3, $id);
-        $listener->replaceArgument(6, $config['parameter']);
-        $listener->replaceArgument(7, $config['role']);
-
-        return $switchUserListenerId;
     }
 
     private function createExpression($container, $expression)

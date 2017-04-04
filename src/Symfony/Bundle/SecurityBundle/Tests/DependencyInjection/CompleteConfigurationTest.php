@@ -98,7 +98,6 @@ abstract class CompleteConfigurationTest extends TestCase
                 null,
                 array(
                     'logout',
-                    'switch_user',
                     'x509',
                     'remote_user',
                     'form_login',
@@ -106,6 +105,8 @@ abstract class CompleteConfigurationTest extends TestCase
                     'http_digest',
                     'remember_me',
                     'anonymous',
+                    'switch_user',
+                    'access_control'
                 ),
                 true
             ),
@@ -123,6 +124,7 @@ abstract class CompleteConfigurationTest extends TestCase
                 array(
                     'http_basic',
                     'anonymous',
+                    'access_control'
                 ),
                 true
             ),
@@ -140,6 +142,7 @@ abstract class CompleteConfigurationTest extends TestCase
                 array(
                     'http_basic',
                     'anonymous',
+                    'access_control'
                 ),
                 true
             ),

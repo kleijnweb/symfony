@@ -265,14 +265,6 @@ class MainConfiguration implements ConfigurationInterface
                     ->end()
                 ->end()
             ->end()
-            ->arrayNode('switch_user')
-                ->canBeUnset()
-                ->children()
-                    ->scalarNode('provider')->end()
-                    ->scalarNode('parameter')->defaultValue('_switch_user')->end()
-                    ->scalarNode('role')->defaultValue('ROLE_ALLOWED_TO_SWITCH')->end()
-                ->end()
-            ->end()
         ;
 
         $abstractFactoryKeys = array();

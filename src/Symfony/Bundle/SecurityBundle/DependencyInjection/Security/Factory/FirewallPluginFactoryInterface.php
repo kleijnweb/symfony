@@ -28,10 +28,10 @@ interface FirewallPluginFactoryInterface
      * @param string           $userProvider      The service id of the user provider
      * @param string           $defaultEntryPoint
      *
-     * @return array containing three values:
-     *               - the provider id
-     *               - the listener id
-     *               - the entry point id
+     * @return array|FirewallPlugin When array, tuple containing three values:
+     *               - the authentication provider id (or NULL)
+     *               - the firewall listener id
+     *               - the authentication entry point id (or NULL)
      */
     public function create(ContainerBuilder $container, $id, $config, $userProvider, $defaultEntryPoint);
 

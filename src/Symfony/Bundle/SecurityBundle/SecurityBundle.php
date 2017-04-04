@@ -11,7 +11,6 @@
 
 namespace Symfony\Bundle\SecurityBundle;
 
-use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\JsonLoginFactory;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -26,10 +25,13 @@ use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\X509Facto
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\RemoteUserFactory;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\SimplePreAuthenticationFactory;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\SimpleFormFactory;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\JsonLoginFactory;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\AnonymousAuthenticationFactory;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\AccessControlPluginFactory;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\UserProvider\InMemoryFactory;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\GuardAuthenticationFactory;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\UserProvider\LdapFactory;
-use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\AnonymousAuthenticationFactory;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\SwitchUserPluginFactory;
 
 /**
  * Bundle.
@@ -57,6 +59,8 @@ class SecurityBundle extends Bundle
         $extension->addFirewallPluginFactory(new SimpleFormFactory());
         $extension->addFirewallPluginFactory(new GuardAuthenticationFactory());
         $extension->addFirewallPluginFactory(new AnonymousAuthenticationFactory());
+        $extension->addFirewallPluginFactory(new AccessControlPluginFactory());
+        $extension->addFirewallPluginFactory(new SwitchUserPluginFactory());
 
         $extension->addUserProviderFactory(new InMemoryFactory());
         $extension->addUserProviderFactory(new LdapFactory());
