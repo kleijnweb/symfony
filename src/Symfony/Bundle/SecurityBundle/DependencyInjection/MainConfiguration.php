@@ -11,7 +11,9 @@
 
 namespace Symfony\Bundle\SecurityBundle\DependencyInjection;
 
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\AbstractAuthenticationPluginFactory;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\AbstractFactory;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\FirewallPluginFactoryInterface;
 use Symfony\Component\Security\Core\Authorization\AccessDecisionManager;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -33,7 +35,7 @@ use Symfony\Component\Security\Http\Session\SessionAuthenticationStrategy;
  */
 class MainConfiguration implements ConfigurationInterface
 {
-    private $factories;
+    private $firewallPluginFactories;
     private $userProviderFactories;
 
     /**
@@ -44,7 +46,7 @@ class MainConfiguration implements ConfigurationInterface
      */
     public function __construct(array $factories, array $userProviderFactories)
     {
-        $this->factories = $factories;
+        $this->firewallPluginFactories = $factories;
         $this->userProviderFactories = $userProviderFactories;
     }
 
@@ -85,7 +87,7 @@ class MainConfiguration implements ConfigurationInterface
         $this->addAclSection($rootNode);
         $this->addEncodersSection($rootNode);
         $this->addProvidersSection($rootNode);
-        $this->addFirewallsSection($rootNode, $this->factories);
+        $this->addFirewallsSection($rootNode, $this->firewallPluginFactories);
         $this->addAccessControlSection($rootNode);
         $this->addRoleHierarchySection($rootNode);
 
@@ -274,19 +276,16 @@ class MainConfiguration implements ConfigurationInterface
         ;
 
         $abstractFactoryKeys = array();
-        foreach ($factories as $factoriesAtPosition) {
-            foreach ($factoriesAtPosition as $factory) {
-                $name = str_replace('-', '_', $factory->getKey());
-                $factoryNode = $firewallNodeBuilder->arrayNode($name)
-                    ->canBeUnset()
-                ;
-
-                if ($factory instanceof AbstractFactory) {
-                    $abstractFactoryKeys[] = $name;
-                }
-
-                $factory->addConfiguration($factoryNode);
+        foreach ($factories as $factory) {
+            $name = str_replace('-', '_', $factory->getKey());
+            $factoryNode = $firewallNodeBuilder->arrayNode($name)
+                ->canBeUnset()
+            ;
+            if ($factory instanceof AbstractAuthenticationPluginFactory) {
+                $abstractFactoryKeys[] = $name;
             }
+
+            $factory->addConfiguration($factoryNode);
         }
 
         // check for unreachable check paths
@@ -302,8 +301,15 @@ class MainConfiguration implements ConfigurationInterface
                             continue;
                         }
 
-                        if (false !== strpos($firewall[$k]['check_path'], '/') && !preg_match('#'.$firewall['pattern'].'#', $firewall[$k]['check_path'])) {
-                            throw new \LogicException(sprintf('The check_path "%s" for login method "%s" is not matched by the firewall pattern "%s".', $firewall[$k]['check_path'], $k, $firewall['pattern']));
+                        if (false !== strpos($firewall[$k]['check_path'], '/')
+                              && !preg_match('#'.$firewall['pattern'].'#', $firewall[$k]['check_path'])) {
+
+                            throw new \LogicException(
+                                sprintf(
+                                    'The check_path "%s" for login method "%s" is not matched by the firewall pattern "%s".',
+                                    $firewall[$k]['check_path'], $k, $firewall['pattern']
+                                )
+                            );
                         }
                     }
 

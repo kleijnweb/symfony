@@ -18,7 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 /**
  * @author John Kleijn <john@kleijnweb.nl>
  */
-class AnonymousAuthenticationFactory implements SecurityFactoryInterface
+class AnonymousAuthenticationFactory implements FirewallPluginFactoryInterface
 {
     public function getPosition()
     {

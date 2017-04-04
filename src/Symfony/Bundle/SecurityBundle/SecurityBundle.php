@@ -12,6 +12,7 @@
 namespace Symfony\Bundle\SecurityBundle;
 
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\JsonLoginFactory;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Compiler\AddSecurityVotersPass;
@@ -41,20 +42,21 @@ class SecurityBundle extends Bundle
     {
         parent::build($container);
 
+        /** @var SecurityExtension $extension */
         $extension = $container->getExtension('security');
-        $extension->addSecurityListenerFactory(new FormLoginFactory());
-        $extension->addSecurityListenerFactory(new FormLoginLdapFactory());
-        $extension->addSecurityListenerFactory(new JsonLoginFactory());
-        $extension->addSecurityListenerFactory(new HttpBasicFactory());
-        $extension->addSecurityListenerFactory(new HttpBasicLdapFactory());
-        $extension->addSecurityListenerFactory(new HttpDigestFactory());
-        $extension->addSecurityListenerFactory(new RememberMeFactory());
-        $extension->addSecurityListenerFactory(new X509Factory());
-        $extension->addSecurityListenerFactory(new RemoteUserFactory());
-        $extension->addSecurityListenerFactory(new SimplePreAuthenticationFactory());
-        $extension->addSecurityListenerFactory(new SimpleFormFactory());
-        $extension->addSecurityListenerFactory(new GuardAuthenticationFactory());
-        $extension->addSecurityListenerFactory(new AnonymousAuthenticationFactory());
+        $extension->addFirewallPluginFactory(new FormLoginFactory());
+        $extension->addFirewallPluginFactory(new FormLoginLdapFactory());
+        $extension->addFirewallPluginFactory(new JsonLoginFactory());
+        $extension->addFirewallPluginFactory(new HttpBasicFactory());
+        $extension->addFirewallPluginFactory(new HttpBasicLdapFactory());
+        $extension->addFirewallPluginFactory(new HttpDigestFactory());
+        $extension->addFirewallPluginFactory(new RememberMeFactory());
+        $extension->addFirewallPluginFactory(new X509Factory());
+        $extension->addFirewallPluginFactory(new RemoteUserFactory());
+        $extension->addFirewallPluginFactory(new SimplePreAuthenticationFactory());
+        $extension->addFirewallPluginFactory(new SimpleFormFactory());
+        $extension->addFirewallPluginFactory(new GuardAuthenticationFactory());
+        $extension->addFirewallPluginFactory(new AnonymousAuthenticationFactory());
 
         $extension->addUserProviderFactory(new InMemoryFactory());
         $extension->addUserProviderFactory(new LdapFactory());

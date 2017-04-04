@@ -107,6 +107,7 @@ abstract class CompleteConfigurationTest extends TestCase
                     'remember_me',
                     'anonymous',
                 ),
+                true
             ),
             array(
                 'host',
@@ -123,6 +124,7 @@ abstract class CompleteConfigurationTest extends TestCase
                     'http_basic',
                     'anonymous',
                 ),
+                true
             ),
             array(
                 'with_user_checker',
@@ -139,6 +141,7 @@ abstract class CompleteConfigurationTest extends TestCase
                     'http_basic',
                     'anonymous',
                 ),
+                true
             ),
         ), $configs);
 

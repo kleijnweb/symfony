@@ -11,7 +11,7 @@
 
 namespace Symfony\Bundle\SecurityBundle\Tests\Functional\Bundle\FirewallPostAuthenticationBundle\DependencyInjection\Factory;
 
-use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\SecurityFactoryInterface;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\FirewallPluginFactoryInterface;
 use Symfony\Bundle\SecurityBundle\Tests\Functional\Bundle\FirewallPostAuthenticationBundle\Security\CustomAccessListener;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -21,7 +21,7 @@ use Symfony\Component\DependencyInjection\Reference;
 /**
  * @author John Kleijn <john@kleijnweb.nl>
  */
-class CustomAccessFactory implements SecurityFactoryInterface
+class CustomAccessFactory implements FirewallPluginFactoryInterface
 {
     const ID = 'security.authentication.listener.some_dummy_post_authentication_plugin';
 

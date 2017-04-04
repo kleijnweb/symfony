@@ -27,6 +27,6 @@ class FirewallPostAuthenticationBundle extends Bundle
 
         /** @var SecurityExtension $extension */
         $extension = $container->getExtension('security');
-        $extension->addSecurityListenerFactory(new CustomAccessFactory());
+        $extension->addFirewallPluginFactory(new CustomAccessFactory());
     }
 }

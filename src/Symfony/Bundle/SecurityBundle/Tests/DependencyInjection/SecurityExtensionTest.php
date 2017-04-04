@@ -12,7 +12,7 @@
 namespace Symfony\Bundle\SecurityBundle\Tests\DependencyInjection;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\SecurityFactoryInterface;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\FirewallPluginFactoryInterface;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\SecurityExtension;
 use Symfony\Bundle\SecurityBundle\SecurityBundle;
 use Symfony\Bundle\SecurityBundle\Tests\DependencyInjection\Fixtures\Factory\SomePostAuthenticationFactory;
@@ -144,7 +144,7 @@ class SecurityExtensionTest extends TestCase
     }
 
     /**
-     * @param SecurityFactoryInterface[] $factories
+     * @param FirewallPluginFactoryInterface[] $factories
      *
      * @return ContainerBuilder
      */
@@ -158,7 +158,7 @@ class SecurityExtensionTest extends TestCase
         $bundle->build($container);
 
         foreach ($factories as $factory) {
-            $security->addSecurityListenerFactory($factory);
+            $security->addFirewallPluginFactory($factory);
         }
 
         $container->getCompilerPassConfig()->setOptimizationPasses(array());

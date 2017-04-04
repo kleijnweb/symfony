@@ -26,7 +26,8 @@ final class FirewallConfig
     private $entryPoint;
     private $accessDeniedHandler;
     private $accessDeniedUrl;
-    private $listeners;
+    private $pluginKeys;
+    private $allowsAnon;
 
     /**
      * @param string      $name
@@ -39,9 +40,10 @@ final class FirewallConfig
      * @param string|null $entryPoint
      * @param string|null $accessDeniedHandler
      * @param string|null $accessDeniedUrl
-     * @param string[]    $listeners
+     * @param string[]    $pluginKeys
+     * @param bool        $allowsAnon
      */
-    public function __construct($name, $userChecker, $requestMatcher = null, $securityEnabled = true, $stateless = false, $provider = null, $context = null, $entryPoint = null, $accessDeniedHandler = null, $accessDeniedUrl = null, $listeners = array())
+    public function __construct($name, $userChecker, $requestMatcher = null, $securityEnabled = true, $stateless = false, $provider = null, $context = null, $entryPoint = null, $accessDeniedHandler = null, $accessDeniedUrl = null, $pluginKeys = array(), $allowsAnon = false)
     {
         $this->name = $name;
         $this->userChecker = $userChecker;
@@ -53,7 +55,8 @@ final class FirewallConfig
         $this->entryPoint = $entryPoint;
         $this->accessDeniedHandler = $accessDeniedHandler;
         $this->accessDeniedUrl = $accessDeniedUrl;
-        $this->listeners = $listeners;
+        $this->pluginKeys = $pluginKeys;
+        $this->allowsAnon = $allowsAnon;
     }
 
     public function getName()
@@ -77,7 +80,7 @@ final class FirewallConfig
 
     public function allowsAnonymous()
     {
-        return in_array('anonymous', $this->listeners, true);
+        return $this->allowsAnon;
     }
 
     public function isStateless()
@@ -134,10 +137,18 @@ final class FirewallConfig
     }
 
     /**
-     * @return string[] An array of listener keys
+     * @deprecated Use getPluginKeys()
      */
     public function getListeners()
     {
-        return $this->listeners;
+        return $this->getPluginKeys();
+    }
+
+    /**
+     * @return string[] An array of plugin keys
+     */
+    public function getPluginKeys()
+    {
+        return $this->pluginKeys;
     }
 }

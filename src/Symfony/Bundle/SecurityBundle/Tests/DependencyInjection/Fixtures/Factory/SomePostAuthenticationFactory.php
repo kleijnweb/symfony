@@ -11,7 +11,7 @@
 
 namespace Symfony\Bundle\SecurityBundle\Tests\DependencyInjection\Fixtures\Factory;
 
-use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\SecurityFactoryInterface;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\FirewallPluginFactoryInterface;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\Definition;
 /**
  * @author John Kleijn <john@kleijnweb.nl>
  */
-class SomePostAuthenticationFactory implements SecurityFactoryInterface
+class SomePostAuthenticationFactory implements FirewallPluginFactoryInterface
 {
     const DUMMY_ID = 'security.authentication.listener.some_dummy_post_authentication_plugin';
 
