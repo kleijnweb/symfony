@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\SecurityBundle\DependencyInjection;
 
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\FirewallConfig\FirewallConfigDefinitionAmenderInterface;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\FirewallPlugin;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\FirewallPluginFactoryInterface;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\SecurityFactoryInterface;
@@ -74,7 +75,7 @@ class SecurityExtension extends Extension
 
         $config = $this->processConfiguration($mainConfig, $configs);
 
-        if($config['access_control']){
+        if ($config['access_control']) {
             // When there are global access control rules, set them to be used by firewall plugins
             $this->accessControlRules = $config['access_control'];
         }
@@ -111,7 +112,7 @@ class SecurityExtension extends Extension
         $container->setParameter('security.authentication.hide_user_not_found', $config['hide_user_not_found']);
 
         $this->createFirewalls($config, $container);
-        $this->createAuthorization($config, $container);
+        $this->createAccessMap($config, $container);
         $this->createRoleHierarchy($config, $container);
 
         if ($config['encoders']) {
@@ -212,7 +213,7 @@ class SecurityExtension extends Extension
         $container->removeDefinition('security.access.simple_role_voter');
     }
 
-    private function createAuthorization($config, ContainerBuilder $container)
+    private function createAccessMap($config, ContainerBuilder $container)
     {
         if (!$config['access_control']) {
             return;
@@ -294,9 +295,9 @@ class SecurityExtension extends Extension
 
     private function createFirewall(ContainerBuilder $container, $id, $firewall, &$authenticationProviders, $providerIds, $configId)
     {
-        $config = $container->setDefinition($configId, new ChildDefinition('security.firewall.config'));
-        $config->replaceArgument(0, $id);
-        $config->replaceArgument(1, $firewall['user_checker']);
+        $firewallConfigDefinition = $container->setDefinition($configId, new ChildDefinition('security.firewall.config'));
+        $firewallConfigDefinition->replaceArgument(0, $id);
+        $firewallConfigDefinition->replaceArgument(1, $firewall['user_checker']);
 
         // Matcher
         $matcher = null;
@@ -309,15 +310,16 @@ class SecurityExtension extends Extension
             $matcher = $this->createRequestMatcher($container, $pattern, $host, $methods);
         }
 
-        $config->replaceArgument(2, $matcher ? (string)$matcher : null);
-        $config->replaceArgument(3, $firewall['security']);
+
+        $firewallConfigDefinition->replaceArgument(2, $matcher ? (string)$matcher : null);
+        $firewallConfigDefinition->replaceArgument(3, $firewall['security']);
 
         // Security disabled?
         if (false === $firewall['security']) {
             return array($matcher, array(), null);
         }
 
-        $config->replaceArgument(4, $firewall['stateless']);
+        $firewallConfigDefinition->replaceArgument(4, $firewall['stateless']);
 
         // Provider id (take the first registered provider if none defined)
         if (isset($firewall['provider'])) {
@@ -326,7 +328,7 @@ class SecurityExtension extends Extension
             $defaultProvider = reset($providerIds);
         }
 
-        $config->replaceArgument(5, $defaultProvider);
+        $firewallConfigDefinition->replaceArgument(5, $defaultProvider);
 
         // Register listeners
         $listeners = array();
@@ -338,15 +340,11 @@ class SecurityExtension extends Extension
         $contextKey = null;
         // Context serializer listener
         if (false === $firewall['stateless']) {
-            $contextKey = $id;
-            if (isset($firewall['context'])) {
-                $contextKey = $firewall['context'];
-            }
-
+            $contextKey = isset($firewall['context']) ? $firewall['context'] : $id;
             $listeners[] = new Reference($this->createContextListener($container, $contextKey));
         }
 
-        $config->replaceArgument(6, $contextKey);
+        $firewallConfigDefinition->replaceArgument(6, $contextKey);
 
         // Logout listener
         if (isset($firewall['logout'])) {
@@ -410,22 +408,22 @@ class SecurityExtension extends Extension
         // Determine default entry point
         $configuredEntryPoint = isset($firewall['entry_point']) ? $firewall['entry_point'] : null;
 
-        if($this->accessControlRules){
+        if ($this->accessControlRules) {
             $firewall['access_control'] = $this->accessControlRules;
         }
 
         // Plugin listeners
-        list($authListeners, $defaultEntryPoint) = $this->createListeners($container, $id, $firewall, $authenticationProviders, $defaultProvider, $configuredEntryPoint);
+        list($authListeners, $defaultEntryPoint) = $this->createListeners($container, $id, $firewall, $firewallConfigDefinition, $authenticationProviders, $defaultProvider, $configuredEntryPoint);
 
-        $config->replaceArgument(7, $configuredEntryPoint ?: $defaultEntryPoint);
+        $firewallConfigDefinition->replaceArgument(7, $configuredEntryPoint ?: $defaultEntryPoint);
 
         $listeners = array_merge($listeners, $authListeners);
 
         // Exception listener
         $exceptionListener = new Reference($this->createExceptionListener($container, $firewall, $id, $configuredEntryPoint ?: $defaultEntryPoint, $firewall['stateless']));
 
-        $config->replaceArgument(8, isset($firewall['access_denied_handler']) ? $firewall['access_denied_handler'] : null);
-        $config->replaceArgument(9, isset($firewall['access_denied_url']) ? $firewall['access_denied_url'] : null);
+        $firewallConfigDefinition->replaceArgument(8, isset($firewall['access_denied_handler']) ? $firewall['access_denied_handler'] : null);
+        $firewallConfigDefinition->replaceArgument(9, isset($firewall['access_denied_url']) ? $firewall['access_denied_url'] : null);
 
         $container->setAlias('security.user_checker.' . $id, new Alias($firewall['user_checker'], false));
 
@@ -441,8 +439,8 @@ class SecurityExtension extends Extension
             }
         }
 
-        $config->replaceArgument(10, $listenerKeys);
-        $config->replaceArgument(11, $allowsAnonymous);
+        $firewallConfigDefinition->replaceArgument(10, $listenerKeys);
+        $firewallConfigDefinition->replaceArgument(11, $allowsAnonymous);
 
         return array($matcher, $listeners, $exceptionListener);
     }
@@ -460,7 +458,7 @@ class SecurityExtension extends Extension
         return $this->contextListeners[$contextKey] = $listenerId;
     }
 
-    private function createListeners($container, $id, $firewall, &$authenticationProviders, $defaultProvider, $defaultEntryPoint)
+    private function createListeners($container, $id, $firewall, $config, &$authenticationProviders, $defaultProvider, $defaultEntryPoint)
     {
         $listeners = array();
         $hasAuthenticationProvider = false;
@@ -468,6 +466,10 @@ class SecurityExtension extends Extension
         /** @var FirewallPluginFactoryInterface $factory */
         foreach ($this->firewallPluginFactories as $factory) {
             $key = str_replace('-', '_', $factory->getKey());
+
+            if($factory instanceof FirewallConfigDefinitionAmenderInterface){
+                $factory->amendFirewallConfigDefinition($id, $firewall, $config);
+            }
 
             if (isset($firewall[$key])) {
                 $userProvider = isset($firewall[$key]['provider']) ? $this->getUserProviderId($firewall[$key]['provider']) : $defaultProvider;

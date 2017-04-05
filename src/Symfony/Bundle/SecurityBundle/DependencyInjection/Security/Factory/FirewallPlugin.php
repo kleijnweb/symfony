@@ -18,6 +18,8 @@ namespace Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory;
  */
 class FirewallPlugin
 {
+    const POSITION_MATCH_REQUEST = 'match_reuqest';
+
     const POSITION_PRE_AUTHENTICATION = 'pre_auth';
     const POSITION_AUTHENTICATION_FORM = 'form';
     const POSITION_AUTHENTICATION_HTTP = 'http';
